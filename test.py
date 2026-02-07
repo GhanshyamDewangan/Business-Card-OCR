@@ -200,8 +200,6 @@ async def perform_ocr(request_data: OCRRequest):
 
         if "," in base64_image1:
             base64_image1 = base64_image1.split(',')[1]
-        base64_image1 = base64_image1.strip()
-        logger.info(f"Image 1 Payload Size: {len(base64_image1)} chars")
         
         base64_image2_cleaned = ""
         if base64_image2:
@@ -209,8 +207,6 @@ async def perform_ocr(request_data: OCRRequest):
                 base64_image2_cleaned = base64_image2.split(',')[1]
             else:
                 base64_image2_cleaned = base64_image2
-            base64_image2_cleaned = base64_image2_cleaned.strip()
-            logger.info(f"Image 2 Payload Size: {len(base64_image2_cleaned)} chars")
 
         # --- Step 1: Initial Extraction (Unchanged) ---
         logger.info("Step 1: Sending image(s) to OpenAI for initial extraction...")
@@ -258,7 +254,7 @@ async def perform_ocr(request_data: OCRRequest):
         - **Website:** Must be the official domain (e.g. .com, .in). Avoid JustDial/LinkedIn/Facebook unless no official site exists.
         - **Person:** If the card has a name, verify their role. If no name, FIND the owner/director.
         - **Address:** Verify the address matches the location.
-        
+
         Return the FINAL MERGED JSON in this format:
         {{
             "company": "...",
@@ -331,10 +327,12 @@ async def perform_ocr(request_data: OCRRequest):
                     {"role": "user", "content": augmented_prompt}
                 ],
                 response_format={"type": "json_object"}
-                # temperature=0.0 # Not supported
              )
              final_data = parse_openai_json(fallback_response.choices[0].message.content)
 
+        except Exception as e:
+             logger.error(f"Search failed: {e}")
+             final_data = ocr_data # Fallback to original data
              final_data["is_validated"] = False
 
         # --- Step 5b: Confidence Score (Simplified) ---

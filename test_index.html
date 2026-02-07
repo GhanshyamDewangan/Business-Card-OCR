@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Business Card Reader</title>
+  <title>Business Card Reader (Test Version)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,9 +40,9 @@
 
   <div id="notification"></div>
 
-  <div class="w-full max-w-md mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+  <div class="w-full max-w-md mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border-2 border-purple-500">
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Business Card Reader</h1>
+      <h1 class="text-3xl font-bold text-gray-800">Test Reader (Port 8001)</h1>
     </div>
 
     <form id="cardForm" class="space-y-6">
@@ -89,7 +89,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // ⚠️ IMPORTANT: THIS MUST BE YOUR PYTHON BACKEND URL
-      const ocrBackendUrl = 'http://127.0.0.1:8000/ocr'; 
+      const ocrBackendUrl = 'http://127.0.0.1:8001/ocr'; // Changed to local server for testing
       
       const form = document.getElementById('cardForm');
       const submitBtn = document.getElementById('submitBtn');
