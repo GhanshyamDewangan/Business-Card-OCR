@@ -31,6 +31,7 @@ if not LINKUP_API_KEY:
 
 # Initialize Client
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
+async_client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 # --- Basic Setup ---
 app = FastAPI()
@@ -52,21 +53,42 @@ class OCRRequest(BaseModel):
     base64Image1: str # From Card Front
     base64Image2: str | None = None # From Card Back
 
+class KeyPerson(BaseModel):
+    name: str = Field(default="Not Found")
+    role: str = Field(default="Not Found")
+    contact: str = Field(default="Not Found")
+
 class OCRResponse(BaseModel):
-    company: str | None = Field(default="")
-    name: str | None = Field(default="")
-    title: str | None = Field(default="")
-    phone: str | None = Field(default="")
-    email: str | None = Field(default="")
-    address: str | None = Field(default="")
-    website: str | None = Field(default="")
-    validation_source: str | None = Field(default="")
+    # --- Card Data ---
+    company: str = Field(default="", description="Company Name from Card")
+    name: str = Field(default="", description="Person Name from Card")
+    title: str = Field(default="", description="Job Title from Card")
+    phone: str = Field(default="", description="Phone Number from Card")
+    email: str = Field(default="", description="Email from Card")
+    address: str = Field(default="", description="Address from Card")
+    location: str = Field(default="", description="City/State from Card")
+    
+    # --- Enriched Data (Web Search) ---
+    industry: str = Field(default="", description="Industry/Sector")
+    website: str = Field(default="", description="Official Website URL")
+    social_media: str = Field(default="", description="Comma-separated List of Raw Profile URLs (e.g. https://instagram.com/xyz, https://facebook.com/abc)")
+    services: str = Field(default="", description="List of services/products")
+    company_size: str = Field(default="", description="Number of employees (e.g. 1-10)")
+    founded_year: str = Field(default="", description="Year established")
+    registration_status: str = Field(default="", description="Registration details (GST/CIN/Active)")
+    trust_score: str = Field(default="0", description="Reliability score 0-10")
+    key_people: list[KeyPerson] = Field(default_factory=list, description="List of key leadership found")
+    key_people_str: str = Field(default="", description="Backup string of key people")
+    
+    # --- Meta Data ---
+    validation_source: str = Field(default="", description="Source URL for verification")
     is_validated: bool = Field(default=False)
-    about_the_company: str | None = Field(default="")
-    location: str | None = Field(default="")
-    founder: str | None = Field(default="")
-    ceo: str | None = Field(default="")
-    owner: str | None = Field(default="")
+    about_the_company: str = Field(default="", description="Short description of company")
+    
+    # Legacy fields (kept for compatibility)
+    founder: str | None = Field(default=None)
+    ceo: str | None = Field(default=None)
+    owner: str | None = Field(default=None)
 
 # --- Search Function (LinkUp) ---
 def search_linkup(query, depth="standard"):
@@ -241,7 +263,9 @@ async def perform_ocr(request_data: OCRRequest):
         # --- Step 2: Verification & Enrichment via OpenAI Web Search ---
         logger.info("Step 2: Using OpenAI Web Search to Verify & Enrich...")
 
-        # Construct a prompt that forces the model to SEARCH
+        # --- Step 2: Verification & Enrichment via OpenAI Web Search ---
+        logger.info("Step 2: Using OpenAI Web Search to Verify & Enrich...")
+
         search_prompt = f"""
         I have extracted the following information from a business card:
         {json.dumps(ocr_data, indent=2)}
@@ -250,108 +274,168 @@ async def perform_ocr(request_data: OCRRequest):
         
         **SEARCH INSTRUCTIONS:**
         1.  **Search for the Company:** Find the OFFICIAL website.
-        2.  **Find the Owner/Leadership:** Search specifically for "Owner", "Founder", "Managing Director", "Directors" of this company (especially on Zauba Corp/Tofler if Indian).
-        3.  **Find Contact Details:** Look for official email addresses (info@, contact@) and phone numbers if missing.
-        4.  **Write Description:** Write a detailed 'about_the_company'.
+        2.  **VERIFY LEGITIMACY ("Sahi hai ya nahi"):** 
+            - Check if the company is REGISTERED (e.g., look for GST, CIN, Zauba Corp, Tofler, or local business registries).
+            - Look for "Scam" or "Fake" reports if suspicious.
+            - Check if the social media pages are active.
+        3.  **Find the Owner/Leadership:** Search specifically for "Owner", "Founder", "Managing Director", "CEO".
+        4.  **GET THEIR CONTACT DETAILS:** Try to find the Email or Phone Number specifically for the Founder/CEO from LinkedIn or 'About Us'.
+        5.  **Enrich Details:** Find Industry, Company Size, Services, and Social Media links.
         
         **VALIDATION RULES:**
-        - **Website:** Must be the official domain (e.g. .com, .in). Avoid JustDial/LinkedIn/Facebook unless no official site exists.
-        - **Person:** If the card has a name, verify their role. If no name, FIND the owner/director.
-        - **Address:** Verify the address matches the location.
+        - **Website:** Must be the official domain.
+        - **Legitimacy:** If you find a registration (MCA/GST/etc), mark as "Verified" in registration_status.
         
-        Return the FINAL MERGED JSON in this format:
-        {{
-            "company": "...",
-            "name": "...", 
-            "title": "...",
-            "phone": "...",
-            "email": "...",
-            "address": "...",
-            "slogan": "...",
-            "location": "...",
-            "website": "...",
-            "validation_source": "URL of the best source found",
-            "is_validated": true/false,
-            "about_the_company": "...",
-            "founder": "...",
-            "ceo": "...",
-            "owner": "..."
-        }}
+        **OUTPUT REQUIREMENT:**
+        You MUST return a valid JSON object matching the `OCRResponse` schema exactly.
+        Ensure all fields are filled to the best of your ability using the search results.
+        If a field is not found, use an empty string or "Not Found".
         """
 
-        # Using the Responses API (Beta Web Search)
-        logger.info("Calling OpenAI Responses API (Web Search)...")
+        # Using Structured Outputs (beta.chat.completions.parse)
+        # ERROR FIX: `parse` does not support `web_search` tool directly yet.
+        # STRATEGY: 
+        # 1. Use `client.responses.create` (or `chat.completions` with search) to get the raw search data.
+        # 2. Use `beta.chat.completions.parse` to structured that raw text into our Pydantic model.
+
+
         try:
-             # User explicit request: use client.responses.create
-             # Ensure openai package is up to date for this feature.
-             search_response = client.responses.create(
+             logger.info("Phase 2A: Recursive Deep Investigation...")
+             import asyncio
+             
+             # --- Step 1: Discovery (Find Legal Entity Name) ---
+             # We need to know who the "Real" company is (e.g. "Grand Arsh" instead of "Grand Imperia")
+             discovery_query = f"{ocr_data.get('company', '')} {ocr_data.get('location', '')} legal name GST owner"
+             logger.info(f"1. Discovery Search: {discovery_query}")
+             
+             discovery_response = await async_client.responses.create(
                 model="gpt-5",
                 tools=[{"type": "web_search"}],
-                input=search_prompt
+                input=f"Find the legal registered entity name, GSTIN, and owner for: {discovery_query}. If a parent company exists, identify it."
             )
-             
-             raw_output = search_response.output_text
-             logger.info(f"Raw Response Output: {raw_output[:200]}...") 
-             
-             final_data = parse_openai_json(raw_output)
-             logger.info(f"Step 2: OpenAI Search Result (via Responses API): {final_data}")
+             discovery_text = discovery_response.output_text
+             logger.info(f"Discovery Complete. Length: {len(discovery_text)}")
 
-        except Exception as e:
-             logger.warning(f"client.responses failed: {e}. Fallback to Manual Search + Chat Completions.")
+             # --- Step 2: Parallel Deep Dive (Using BEST KNOWN NAME) ---
+             # We pass the discovery text to the agents so they know what to look for
              
-             # 1. Manual Search Fallback
-             query_parts = [ocr_data.get("company", ""), ocr_data.get("name", ""), "official website contact info"]
-             query = " ".join([p for p in query_parts if p]).strip()
-             
-             search_results = None
-             if query:
-                 logger.info(f"Fallback Search Query: {query}")
-                 search_results = search_google(query)
-             
-             search_context = ""
-             if search_results:
-                 logger.info(f"Fallback search found {len(search_results)} results.")
-                 search_context = f"Here are the search results from the internet:\n{json.dumps(search_results, indent=2)}"
-             else:
-                 logger.info("Fallback search returned no results.")
-                 search_context = "No external search results found. Do your best with the OCR data."
+             async def search_leadership_deep():
+                 # The prompt here is dynamic - it asks the AI to use the discovery text to refine its search
+                 return await async_client.responses.create(
+                    model="gpt-5",
+                    tools=[{"type": "web_search"}],
+                    input=f"""
+                    Context from previous search: {discovery_text}
+                    
+                    Task: Find the Directors / Partners / Owners of the LEGAL ENTITY found above.
+                    Search Query Suggestions:
+                    - "[Legal Name]" Director Zauba Corp
+                    - "[Legal Name]" Owner LinkedIn
+                    - "{ocr_data.get('company', '')}" Owner
+                    """
+                )
 
-             # 2. Update Prompt with Context
-             augmented_prompt = f"""
-             {search_context}
+             async def search_socials_deep():
+                 # HACKER MODE: Targeted Site Search using Brand AND Legal Name
+                 return await async_client.responses.create(
+                    model="gpt-5",
+                    tools=[{"type": "web_search"}],
+                    input=f"""
+                    Context: {discovery_text}
+                    
+                    Task: Find OFFICIAL Social Media URLs using "Hacker Mode" queries.
+                    
+                    INSTRUCTIONS:
+                    1. Identify the Legal Entity Name from the context above.
+                    2. Execute searches like:
+                       - site:instagram.com ("{ocr_data.get('company', '')}" OR [Legal Name]) "{ocr_data.get('location', '')}"
+                       - site:facebook.com ("{ocr_data.get('company', '')}" OR [Legal Name]) "{ocr_data.get('location', '')}"
+                       - site:linkedin.com ("{ocr_data.get('company', '')}" OR [Legal Name]) "{ocr_data.get('location', '')}"
+                       
+                    3. EXTRACT the matching profile URLs.
+                    """
+                )
+
+             logger.info("Launching Deep Dive Agents (Leadership + Socials)...")
+             results = await asyncio.gather(search_leadership_deep(), search_socials_deep())
              
-             {search_prompt}
+             combined_search_context = f"""
+             --- 1. DISCOVERY & LEGAL REGISTRATION ---
+             {discovery_text}
+             
+             --- 2. LEADERSHIP & OWNERSHIP (Deep Dive) ---
+             {results[0].output_text}
+             
+             --- 3. SOCIAL MEDIA & CONTACTS ---
+             {results[1].output_text}
              """
              
-             # 3. Call Chat Completion
-             fallback_response = client.chat.completions.create(
-                model="gpt-5",
+             logger.info(f"Phase 2A: Recursive Search Complete. Context Length: {len(combined_search_context)}")
+             
+             # 2. STRUCTURE PHASE (Force Pydantic Schema)
+             logger.info("Phase 2B: Structuring Data into Pydantic Schema...")
+             extraction_prompt = f"""
+             Here is the deep investigation report from 3 different agents:
+             
+             {combined_search_context}
+             
+             
+             Using ONLY the information above (and the original card data), fill out the required JSON structure.
+             Original Card Data: {json.dumps(ocr_data)}
+             
+             Validation Rules:
+             - Registration: If GST/CIN found -> 'Verified'.
+             - Leadership: Combine findings from Agent 2.
+             
+             **CRITICAL INSTRUCTION FOR SOCIAL MEDIA:**
+             - DO NOT SUMMARIZE (e.g. "Found Facebook Page").
+             - YOU MUST EXTRACT THE FULL RAW URL (e.g. "https://www.facebook.com/companyname").
+             - If multiple links are found (Insta, FB, LinkedIn), join them with commas or newlines.
+             - LOOK CLOSELY at Agent 3's output. If a URL is there, IT MUST BE IN THE FINAL JSON.
+             
+             - Trust Score: 9-10 if Website+Reg+Socials found.
+             """
+             
+             completion = await async_client.beta.chat.completions.parse(
+                model="gpt-5", 
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant. Use the provided search results to verify and enrich the data. Output JSON."},
-                    {"role": "user", "content": augmented_prompt}
+                    {"role": "system", "content": "You are a data structuring assistant. Convert the provided research text into the strict JSON schema."},
+                    {"role": "user", "content": extraction_prompt}
                 ],
-                response_format={"type": "json_object"}
-                # temperature=0.0 # Not supported
-             )
-             final_data = parse_openai_json(fallback_response.choices[0].message.content)
+                response_format=OCRResponse, 
+            )
+             
+             final_data_obj = completion.choices[0].message.parsed
+             final_data = final_data_obj.model_dump()
+             logger.info(f"Step 2: Structured Data Received: {final_data}")
 
+        except Exception as e:
+             logger.error(f"Structured Output Parsing Failed: {e}. Fallback to manual JSON.")
+             # Fallback logic
+             final_data = ocr_data 
              final_data["is_validated"] = False
 
-        # --- Step 5b: Confidence Score (Simplified) ---
+        # --- Step 5b: Confidence Score (Enhanced) ---
         confidence_score = 0
-        if final_data.get("is_validated"): confidence_score += 40
-        if final_data.get("founder") or final_data.get("owner"): confidence_score += 20
-        if final_data.get("about_the_company"): confidence_score += 10
-        if final_data.get("website"): confidence_score += 10
+        if final_data.get("is_validated"): confidence_score += 30
+        if final_data.get("website"): confidence_score += 20
+        # Trust score from AI (0-10) converted to points (max 20)
+        try:
+            trust_val = int(str(final_data.get("trust_score", "0")).split('/')[0].strip())
+            confidence_score += (trust_val * 2) 
+        except:
+            pass
+            
+        if final_data.get("registration_status") and "Active" in final_data.get("registration_status"): confidence_score += 10
+        if final_data.get("key_people"): confidence_score += 10 # Check list existence
+        if final_data.get("social_media"): confidence_score += 10
         
         logger.info(f"Confidence Score: {confidence_score}")
 
-        # Clean up phone number and slogan if present
+        # Clean up phone number
         phone_number = final_data.get("phone", "")
         if phone_number and phone_number.startswith('+'):
             final_data["phone"] = "'" + phone_number
-        if 'slogan' in final_data:
-            del final_data['slogan']
 
         # --- Step 6: Submit to Google Apps Script ---
         logger.info("Step 6: Submitting final data to Google Apps Script...")

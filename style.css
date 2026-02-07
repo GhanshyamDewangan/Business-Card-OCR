@@ -1,0 +1,547 @@
+:root {
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --surface: #ffffff;
+  --background: #fcfcfd;
+  --border: #f1f1f4;
+  --text-main: #18181b;
+  --text-muted: #71717a;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--background);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+.pay-btn {
+  position: relative;
+  padding: 12px 28px;
+  font-size: 14px;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.pay-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  background: #000;
+}
+
+.pay-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #e4e4e7;
+  color: #a1a1aa;
+}
+
+.pay-btn:disabled .icon {
+  color: #a1a1aa;
+}
+
+.icon-container {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  color: #22c55e;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.default-icon {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hover animations */
+.pay-btn:hover:not(:disabled) .icon {
+  animation: none;
+}
+
+.pay-btn:hover:not(:disabled) .wallet-icon {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.pay-btn:hover:not(:disabled) .card-icon {
+  animation: iconRotate 2.5s infinite;
+  animation-delay: 0s;
+}
+
+.pay-btn:hover:not(:disabled) .payment-icon {
+  animation: iconRotate 2.5s infinite;
+  animation-delay: 0.5s;
+}
+
+.pay-btn:hover:not(:disabled) .dollar-icon {
+  animation: iconRotate 2.5s infinite;
+  animation-delay: 1s;
+}
+
+.pay-btn:hover:not(:disabled) .check-icon {
+  animation: iconRotate 2.5s infinite;
+  animation-delay: 1.5s;
+}
+
+/* Processing state - show only checkmark or spinner */
+.pay-btn.is-processing .icon {
+  animation: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.pay-btn.is-processing .check-icon {
+  animation: checkmarkAppear 0.6s ease forwards;
+  visibility: visible;
+}
+
+.btn-text {
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+}
+
+@keyframes iconRotate {
+  0% {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.5);
+  }
+  5% {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+  15% {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.5);
+  }
+}
+
+@keyframes checkmarkAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-45deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.dashboard-container {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.premium-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+}
+
+.upload-slot {
+  position: relative;
+  background: #fafafa;
+  border: 2px dashed #e4e4e7;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.upload-slot:hover {
+  border-color: var(--brand);
+  background: #f8fbff;
+  transform: translateY(-2px);
+}
+
+.upload-slot.active {
+  border-color: var(--brand);
+  background: #fff;
+  border-style: solid;
+}
+
+.action-button {
+  background: var(--text-main);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover:not(:disabled) {
+  background: #000;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.action-button:disabled {
+  background: #e4e4e7;
+  color: #a1a1aa;
+  cursor: not-allowed;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pulse-blue {
+  background: var(--brand);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.notification-bar {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 100;
+}
+
+.notification-bar.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.scan-progress {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--brand);
+  box-shadow: 0 0 10px var(--brand);
+  z-index: 20;
+  animation: moveScan 2.5s infinite linear;
+  display: none;
+}
+
+@keyframes moveScan {
+  0% {
+    top: 0;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+.processing .scan-progress {
+  display: block;
+}
+
+/* Exchange Background Animation */
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.floating-card {
+  position: absolute;
+  width: 320px;
+  height: 180px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  opacity: 0.8;
+  transition: all 0.5s ease;
+}
+
+/* Business Card Details */
+.floating-card::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--brand) 0%, #60a5fa 100%);
+  border-radius: 8px;
+  opacity: 0.15;
+}
+
+.floating-card::after {
+  content: "";
+  width: 140px;
+  height: 8px;
+  background: var(--brand);
+  opacity: 0.1;
+  border-radius: 4px;
+  box-shadow: 
+    0 15px 0 0 rgba(0, 0, 0, 0.05),
+    0 30px 0 0 rgba(0, 0, 0, 0.03),
+    0 45px 0 0 rgba(0, 0, 0, 0.03),
+    0 60px 0 0 rgba(0, 0, 0, 0.03);
+}
+
+.card-1 {
+  top: 15%;
+  left: -100px;
+  transform: rotate(-15deg);
+  animation: exchangeLeft 25s infinite ease-in-out;
+}
+
+.card-2 {
+  bottom: 20%;
+  right: -100px;
+  transform: rotate(10deg);
+  animation: exchangeRight 30s infinite ease-in-out;
+  animation-delay: -5s;
+}
+
+.card-3 {
+  top: 60%;
+  left: 10%;
+  width: 150px;
+  height: 90px;
+  opacity: 0.3;
+  animation: float 20s infinite ease-in-out;
+}
+
+@keyframes exchangeLeft {
+  0% {
+    left: -320px;
+    transform: rotate(-15deg) translateY(0);
+  }
+  45% {
+    left: 45%;
+    transform: rotate(-5deg) translateY(-20px);
+  }
+  55% {
+    left: 55%;
+    transform: rotate(5deg) translateY(20px);
+  }
+  100% {
+    left: 110%;
+    transform: rotate(15deg) translateY(0);
+  }
+}
+
+@keyframes exchangeRight {
+  0% {
+    right: -320px;
+    transform: rotate(10deg) translateY(0);
+  }
+  45% {
+    right: 45%;
+    transform: rotate(5deg) translateY(20px);
+  }
+  55% {
+    right: 55%;
+    transform: rotate(-5deg) translateY(-20px);
+  }
+  100% {
+    right: 110%;
+    transform: rotate(-10deg) translateY(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-40px) rotate(10deg);
+  }
+}
+
+.glow-orb {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    rgba(37, 99, 235, 0.07) 0%,
+    transparent 75%
+  );
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+}
+
+/* Leads Table Styling */
+.leads-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-top: 20px;
+  background: white;
+}
+
+.leads-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+/* Table Header */
+.leads-table th {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 12px 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #334155;
+  white-space: nowrap;
+  height: 48px;
+  vertical-align: middle;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Table Cells */
+.leads-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 140px;
+  max-width: 300px;
+  vertical-align: middle;
+}
+
+/* Zebra Striping */
+.leads-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.leads-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Specific Column Styles */
+.leads-table td img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+.status-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.web-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+.web-link:hover {
+  text-decoration: underline;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Loader Animation */
+.sync-loader {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

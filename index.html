@@ -1,200 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Business Card Reader</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f5f3ff; }
-    .btn-primary { background-color: #8b5cf6; transition: background-color 0.2s ease-in-out; }
-    .btn-primary:hover:not(:disabled) { background-color: #7c3aed; }
-    .btn-primary:disabled { background-color: #c4b5fd; cursor: not-allowed; }
-    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #8b5cf6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .hidden { display: none; }
-    #notification {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 500;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.3s, transform 0.3s;
-      max-width: 90%;
-      text-align: center;
-    }
-    #notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    #notification.success { background-color: #22c55e; }
-    #notification.error { background-color: #ef4444; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadScan Pro | Intelligent Business Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
+<body class="min-h-screen flex flex-col p-6 sm:p-12 relative">
 
-  <div id="notification"></div>
-
-  <div class="w-full max-w-md mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Business Card Reader</h1>
+    <!-- Background Animation Layer -->
+    <div class="bg-animation">
+        <div class="floating-card card-1"></div>
+        <div class="floating-card card-2"></div>
+        <div class="floating-card card-3"></div>
+        <div class="glow-orb" style="top: -100px; right: -100px;"></div>
+        <div class="glow-orb" style="bottom: -200px; left: -100px;"></div>
     </div>
 
-    <form id="cardForm" class="space-y-6">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Card Front (Required)</label>
-        <div class="flex items-center space-x-4 mt-2">
-          <label for="photo1" class="flex-grow h-36 relative border-2 border-dashed rounded-lg flex items-center justify-center text-center cursor-pointer hover:border-purple-500 transition-colors">
-            <div id="placeholder-photo1" class="text-gray-500"><p class="font-medium">Tap to Upload</p></div>
-            <img id="preview-photo1" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" alt="Front preview">
-          </label>
-          <label for="photo1-capture" class="flex-shrink-0 w-20 h-36 border-2 border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-          </label>
-          <input type="file" id="photo1" class="hidden" accept="image/*">
-          <input type="file" id="photo1-capture" class="hidden" accept="image/*" capture="environment">
-        </div>
-      </div>
-      
-      <div>
-        <label class="text-sm font-medium text-gray-700">Card Back (Optional)</label>
-        <div class="flex items-center space-x-4 mt-2">
-          <label for="photo2" class="flex-grow h-36 relative border-2 border-dashed rounded-lg flex items-center justify-center text-center cursor-pointer hover:border-purple-500 transition-colors">
-            <div id="placeholder-photo2" class="text-gray-500"><p class="font-medium">Tap to Upload</p></div>
-            <img id="preview-photo2" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" alt="Back preview">
-          </label>
-          <label for="photo2-capture" class="flex-shrink-0 w-20 h-36 border-2 border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-          </label>
-          <input type="file" id="photo2" class="hidden" accept="image/*">
-          <input type="file" id="photo2-capture" class="hidden" accept="image/*" capture="environment">
-        </div>
-      </div>
+    <!-- Bottom Toast -->
+    <div id="toast" class="notification-bar bg-white border border-gray-100 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-4 min-w-[320px]">
+        <div id="toast-icon" class="w-2 h-2 rounded-full"></div>
+        <span id="toast-text" class="text-sm font-semibold text-gray-700"></span>
+    </div>
 
-      <button type="submit" id="submitBtn" class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-lg font-medium text-white btn-primary" disabled>
-        <span id="submitBtn-text">Scan & Save</span>
-      </button>
-    </form>
-  </div>
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">Lead Capture</h1>
+                <p class="text-gray-500 text-sm font-medium mt-1">Intelligent OCR Processing Engine</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="leads.html" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-full shadow-sm hover:bg-gray-50 transition-colors group">
+                    <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-blue-600 transition-colors">Database</span>
+                </a>
+                <div class="flex items-center gap-3 px-4 py-2 bg-white border border-gray-100 rounded-full shadow-sm">
+                    <span class="status-dot pulse-blue"></span>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-gray-400">System Ready</span>
+                </div>
+            </div>
+        </header>
 
-  <footer class="text-center text-sm text-gray-500 py-4 mt-6">
-    Powered by <a href="https://www.botivate.in/" target="_blank" rel="noopener noreferrer" class="font-medium text-purple-600 hover:text-purple-500">Botivate</a>
-  </footer>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // ⚠️ IMPORTANT: THIS MUST BE YOUR PYTHON BACKEND URL
-      const ocrBackendUrl = 'http://127.0.0.1:8000/ocr'; 
-      
-      const form = document.getElementById('cardForm');
-      const submitBtn = document.getElementById('submitBtn');
-      const photo1Input = document.getElementById('photo1');
-      const photo1CaptureInput = document.getElementById('photo1-capture');
-      const photo2Input = document.getElementById('photo2');
-      const photo2CaptureInput = document.getElementById('photo2-capture');
-      const preview1 = document.getElementById('preview-photo1');
-      const preview2 = document.getElementById('preview-photo2');
-      const placeholder1 = document.getElementById('placeholder-photo1');
-      const placeholder2 = document.getElementById('placeholder-photo2');
-      const notification = document.getElementById('notification');
-
-      let worker;
-      try {
-        worker = new Worker('worker.js');
-      } catch (e) {
-        console.error("Failed to create a web worker.", e);
-        showNotification("Critical error: Cannot initialize background processor.", false);
-      }
-
-      if (worker) {
-        worker.onmessage = function(event) {
-            const { status, message, data } = event.data;
+        <!-- Dynamic Workspace -->
+        <main class="premium-card p-8 sm:p-10 relative overflow-hidden" id="mainContainer">
+            <div class="scan-progress"></div>
             
-            if (status === 'success') {
-                console.log('Worker Success:', data);
-                showNotification('Scan & Save Successful!', true);
-            } else if (status === 'error') {
-                console.error('Worker Error:', message);
-                showNotification(`Error: ${message}`, false);
-            } else if (status === 'info') {
-                console.log('Worker Info:', message);
+            <form id="extractionForm" class="space-y-12">
+                <!-- Capture Zones -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <!-- Column 1: Front -->
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">Front Capture</span>
+                            <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">PRIMARY</span>
+                        </div>
+                        
+                        <div class="relative group">
+                            <label for="file1" class="upload-slot block w-full aspect-[16/10] rounded-2xl cursor-pointer">
+                                <div id="hint1" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transition-all duration-300 group-hover:scale-105">
+                                    <div class="w-12 h-12 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm mb-3 group-hover:border-blue-200">
+                                        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    </div>
+                                    <p class="text-[13px] font-semibold text-gray-600">Select business card front</p>
+                                    <p class="text-[11px] text-gray-400 mt-1">JPG, PNG or PDF supported</p>
+                                </div>
+                                <img id="view1" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
+                            </label>
+                            <label for="cam1" class="absolute -right-3 -top-3 w-10 h-10 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-gray-50 transition-all z-10 active:scale-95">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                            </label>
+                            <input type="file" id="file1" class="hidden" accept="image/*">
+                            <input type="file" id="cam1" class="hidden" accept="image/*" capture="environment">
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Back -->
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">Back Capture</span>
+                            <span class="text-[9px] bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full font-bold uppercase">Optional</span>
+                        </div>
+                        
+                        <div class="relative group">
+                            <label for="file2" class="upload-slot block w-full aspect-[16/10] rounded-2xl cursor-pointer">
+                                <div id="hint2" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transition-all duration-300 group-hover:scale-105">
+                                    <div class="w-12 h-12 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm mb-3 group-hover:border-blue-200">
+                                        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    </div>
+                                    <p class="text-[13px] font-semibold text-gray-600">Select business card back</p>
+                                    <p class="text-[11px] text-gray-400 mt-1">Optional context extraction</p>
+                                </div>
+                                <img id="view2" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
+                            </label>
+                            <label for="cam2" class="absolute -right-3 -top-3 w-10 h-10 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-gray-50 transition-all z-10 active:scale-95">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                            </label>
+                            <input type="file" id="file2" class="hidden" accept="image/*">
+                            <input type="file" id="cam2" class="hidden" accept="image/*" capture="environment">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-gray-50">
+                    <div class="text-center sm:text-left">
+                        <h4 class="text-[13px] font-bold text-gray-900">Automation Engine</h4>
+                        <p class="text-[11px] text-gray-500 leading-relaxed max-w-xs">Data will be synchronized with Google Sheets and uploaded to Drive automatically.</p>
+                    </div>
+                    <button type="submit" id="mainBtn" class="pay-btn" disabled>
+                        <span class="btn-text" id="labelNormal">Analyze & Sync Card</span>
+                        <span class="btn-text hidden" id="labelProcessing">Processing Lead...</span>
+                        <div class="icon-container">
+                            <svg viewBox="0 0 24 24" class="icon card-icon"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18C2,19.11 2.89,20 4,20H20C21.11,20 22,19.11 22,18V6C22,4.89 21.11,4 20,4Z" fill="currentColor"></path></svg>
+                            <svg viewBox="0 0 24 24" class="icon payment-icon"><path d="M2,17H22V21H2V17M6.25,7H9V6H6V3H18V6H15V7H17.75L19,17H5L6.25,7M9,10H15V8H9V10M9,13H15V11H9V13Z" fill="currentColor"></path></svg>
+                            <svg viewBox="0 0 24 24" class="icon dollar-icon"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"></path></svg>
+                            <svg viewBox="0 0 24 24" class="icon wallet-icon default-icon"><path d="M21,18V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V6H12C10.89,6 10,6.9 10,8V16A2,2 0 0,0 12,18M12,16H22V8H12M16,13.5A1.5,1.5 0 0,1 14.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,12A1.5,1.5 0 0,1 16,13.5Z" fill="currentColor"></path></svg>
+                            <svg viewBox="0 0 24 24" class="icon check-icon"><path d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z" fill="currentColor"></path></svg>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </main>
+
+        <footer class="mt-20 text-center">
+            <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-300">Powered by Botivate</span>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const api = 'http://127.0.0.1:8000/ocr';
+            const frm = document.getElementById('extractionForm');
+            const ctr = document.getElementById('mainContainer');
+            const btn = document.getElementById('mainBtn');
+            const txt = document.getElementById('labelNormal');
+            const ldr = document.getElementById('labelProcessing');
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toast-text');
+            const ico = document.getElementById('toast-icon');
+
+            const dom = {
+                f1: document.getElementById('file1'), c1: document.getElementById('cam1'),
+                f2: document.getElementById('file2'), c2: document.getElementById('cam2'),
+                v1: document.getElementById('view1'), v2: document.getElementById('view2'),
+                h1: document.getElementById('hint1'), h2: document.getElementById('hint2')
+            };
+
+            let bg;
+            try {
+                bg = new Worker('worker.js');
+                bg.onmessage = e => {
+                    const { status, message } = e.data;
+                    done();
+                    if (status === 'success') toastMe('Synced with database.', '#10b981');
+                    else toastMe(message || 'Sync failed.', '#ef4444');
+                };
+            } catch (err) { toastMe('Worker error.', '#ef4444'); }
+
+            function toastMe(m, c) {
+                msg.innerText = m; ico.style.backgroundColor = c;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 5000);
             }
-        };
-      }
 
-      function showNotification(message, isSuccess = true) {
-        notification.textContent = message;
-        notification.className = isSuccess ? 'success' : 'error';
-        notification.classList.add('show');
-        const duration = isSuccess ? 3000 : 4000;
-        setTimeout(() => { notification.classList.remove('show'); }, duration);
-      }
-      
-      function showPreview(file, preview, placeholder) { 
-          if (!file || !preview || !placeholder) return; 
-          const reader = new FileReader(); 
-          reader.onload = e => { 
-              preview.src = e.target.result;
-              preview.classList.remove('hidden'); 
-              placeholder.classList.add('hidden'); 
-          }; 
-          reader.readAsDataURL(file); 
-      }
+            function work() {
+                btn.disabled = true; 
+                txt.classList.add('hidden'); 
+                ldr.classList.remove('hidden');
+                btn.classList.add('is-processing');
+                ctr.classList.add('processing');
+            }
 
-      function updateSubmitState() { 
-          const file1 = photo1Input.files[0] || photo1CaptureInput.files[0]; 
-          if (submitBtn) { submitBtn.disabled = !file1; } 
-      }
-      
-      function addSafeListener(element, event, handler) { 
-          if (element) { element.addEventListener(event, handler); } 
-      }
-      
-      addSafeListener(photo1Input, 'change', () => { showPreview(photo1Input.files[0], preview1, placeholder1); updateSubmitState(); });
-      addSafeListener(photo1CaptureInput, 'change', () => { showPreview(photo1CaptureInput.files[0], preview1, placeholder1); updateSubmitState(); });
-      addSafeListener(photo2Input, 'change', () => { showPreview(photo2Input.files[0], preview2, placeholder2); });
-      addSafeListener(photo2CaptureInput, 'change', () => { showPreview(photo2CaptureInput.files[0], preview2, placeholder2); });
-      
-      function toBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); }); }
+            function done() {
+                btn.disabled = false; 
+                txt.classList.remove('hidden'); 
+                ldr.classList.add('hidden');
+                btn.classList.remove('is-processing');
+                ctr.classList.remove('processing');
+                frm.reset();
+                [dom.v1, dom.v2].forEach(v => { v.src = ''; v.classList.add('hidden'); });
+                [dom.h1, dom.h2].forEach(h => h.classList.remove('hidden'));
+                btn.disabled = true;
+            }
 
-      function resetForm() {
-        form.reset(); 
-        preview1.src = ''; preview1.classList.add('hidden'); placeholder1.classList.remove('hidden');
-        preview2.src = ''; preview2.classList.add('hidden'); placeholder2.classList.remove('hidden');
-        updateSubmitState();
-      }
+            const preview = (f, v, h) => {
+                if (!f) return;
+                const r = new FileReader(); r.onload = e => {
+                    v.src = e.target.result; v.classList.remove('hidden'); h.classList.add('hidden');
+                    v.parentElement.classList.add('active');
+                }; r.readAsDataURL(f);
+                btn.disabled = !(dom.f1.files[0] || dom.c1.files[0]);
+            };
 
-      // --- [SUBMISSION LOGIC UPDATED] ---
-      addSafeListener(form, 'submit', async e => {
-        e.preventDefault();
-        const file1 = photo1Input.files[0] || photo1CaptureInput.files[0];
-        const file2 = photo2Input.files[0] || photo2CaptureInput.files[0]; // Get the second file
+            ['f1', 'c1'].forEach(k => dom[k].onchange = e => preview(e.target.files[0], dom.v1, dom.h1));
+            ['f2', 'c2'].forEach(k => dom[k].onchange = e => preview(e.target.files[0], dom.v2, dom.h2));
 
-        if (!worker) {
-            showNotification("Cannot process in the background. Please refresh.", false);
-            return;
-        }
+            const toB64 = f => new Promise((s, j) => {
+                const r = new FileReader(); r.readAsDataURL(f);
+                r.onload = () => s(r.result.split(',')[1]); r.onerror = j;
+            });
 
-        try {
-          const photo1Base64 = await toBase64(file1);
-          const photo2Base64 = file2 ? await toBase64(file2) : ''; // Convert the second file
-
-          // Send BOTH photos to the worker
-          worker.postMessage({ ocrBackendUrl, photo1Base64, photo2Base64 });
-          
-          showNotification("Uploading in the background...", true);
-          resetForm();
-        } catch (err) {
-            showNotification(`Error preparing upload: ${err.message}`, false);
-        }
-      });
-      // --- [END OF UPDATE] ---
-    });
-  </script>
+            frm.onsubmit = async (e) => {
+                e.preventDefault();
+                const f1 = dom.f1.files[0] || dom.c1.files[0];
+                const f2 = dom.f2.files[0] || dom.c2.files[0];
+                if (!bg || !f1) return;
+                work();
+                try {
+                    const [p1, p2] = await Promise.all([toB64(f1), f2 ? toB64(f2) : '']);
+                    bg.postMessage({ ocrBackendUrl: api, photo1Base64: p1, photo2Base64: p2 });
+                    toastMe('Processing in background...', '#3b82f6');
+                } catch (err) { done(); toastMe('Encode error.', '#ef4444'); }
+            };
+        });
+    </script>
 </body>
 </html>

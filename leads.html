@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Database | LeadScan Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Table enhancements from style.css are already applied, adding specific overrides if needed */
+        .leads-table th {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .leads-table td {
+            font-size: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .photo-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .photo-thumb:hover {
+            transform: scale(1.5);
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .long-text-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .long-text-cell:hover {
+            white-space: normal;
+            word-wrap: break-word;
+            position: relative;
+            background: #fff;
+            z-index: 5;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 300px;
+        }
+        /* Sticky first column removed per user request */
+        /* .leads-table th:first-child,
+        .leads-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: inherit;
+            z-index: 20;
+            border-right: 1px solid #e2e8f0;
+        } */
+        /* .leads-table th:first-child {
+            z-index: 30;
+        } */
+        /* Row hover effect */
+        .leads-table tbody tr:hover td {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div class="w-full max-w-[1920px] mx-auto p-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Leads Database</h1>
+                    <p class="text-xs text-gray-500 font-medium">Synced from Google Sheets</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="loadData()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- content -->
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-[80vh]">
+            
+            <div class="leads-table-container flex-1 overflow-auto">
+                <table class="leads-table w-full">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Card Photo 1</th>
+                            <th>Card Photo 2</th>
+                            <th>Company Name</th>
+                            <th>Industry</th>
+                            <th>Person Name</th>
+                            <th>Designation</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Website</th>
+                            <th>Social Media</th>
+                            <th>Address</th>
+                            <th>Services</th>
+                            <th>Company Size</th>
+                            <th>Founded Year</th>
+                            <th>Registration Status</th>
+                            <th>Trust Score</th>
+                            <th>Key People (Founder/CEO)</th>
+                            <th>Is Validated</th>
+                            <th>Source Link</th>
+                            <th>About Company</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="22" class="p-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <div class="sync-loader w-8 h-8 border-2 border-blue-600 border-t-transparent"></div>
+                                    <p class="text-xs">Loading data...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Footer/Status -->
+            <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs text-gray-500">
+                <span id="recordCount">0 Records found</span>
+                <span>Last updated: <span id="lastUpdated">-</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Hover Preview (Fixed to avoid table overflow clipping) -->
+    <div id="globalHoverPreview" class="fixed pointer-events-none z-[100] hidden bg-white p-2 rounded-xl shadow-2xl border border-gray-100 w-[280px] transition-opacity duration-200 opacity-0">
+        <div class="relative">
+            <img id="globalPreviewImg" src="" class="w-full h-auto rounded-lg bg-gray-50 bg-center bg-no-repeat" style="min-height: 150px;">
+            <div id="globalPreviewLoading" class="absolute inset-0 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+        <div class="mt-2 text-[10px] text-gray-500 font-medium flex justify-between px-1">
+            <span>Card Preview</span>
+            <span class="text-blue-500">Synced</span>
+        </div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCPeTYr3DyfmQaEJCQ_A7KnKJ9gZtz4zO-chHkLyvxMFsCd2JRWikUB8LxpFwwbuczxw/exec';
+        
+        // --- Hover Logic ---
+        const previewEl = document.getElementById('globalHoverPreview');
+        const previewImg = document.getElementById('globalPreviewImg');
+        const previewLoad = document.getElementById('globalPreviewLoading');
+
+        function showPreview(e, highResUrl) {
+            previewImg.onload = () => { previewLoad.classList.add('hidden'); };
+            previewImg.src = highResUrl;
+            previewLoad.classList.remove('hidden');
+            
+            previewEl.classList.remove('hidden');
+            // Small delay to allow fade in
+            requestAnimationFrame(() => previewEl.classList.remove('opacity-0'));
+            
+            movePreview(e);
+        }
+
+        function movePreview(e) {
+            // Position to the right of the cursor mostly, but flip if too close to edge
+            const xOffset = 20;
+            const yOffset = 20;
+            
+            let left = e.clientX + xOffset;
+            let top = e.clientY + yOffset;
+
+            // Flip horizontally if overflow right
+            if (left + 300 > window.innerWidth) {
+                left = e.clientX - 300;
+            }
+            // Flip vertically if overflow bottom
+            if (top + 200 > window.innerHeight) {
+                top = e.clientY - 200;
+            }
+
+            previewEl.style.left = `${left}px`;
+            previewEl.style.top = `${top}px`;
+        }
+
+        function hidePreview() {
+            previewEl.classList.add('opacity-0');
+            setTimeout(() => {
+                if (previewEl.classList.contains('opacity-0')) {
+                    previewEl.classList.add('hidden');
+                    previewImg.src = ''; 
+                }
+            }, 200);
+        }
+        // -------------------
+
+        // Column mapping helper
+        // We look for these keys in the data row object
+        const COL_KEYS = [
+            ['Timestamp'], 
+            ['Card Photo 1'], 
+            ['Card Photo 2'], 
+            ['Company Name'], 
+            ['Industry'], 
+            ['Person Name'], 
+            ['Designation'], 
+            ['Phone'], 
+            ['Email'], 
+            ['Website'], 
+            ['Social Media'], 
+            ['Address'], 
+            ['Services'], 
+            ['Company Size'], 
+            ['Founded Year'], 
+            ['Registration Status'], 
+            ['Trust Score'], 
+            ['Key People (Founder/CEO)'], 
+            ['Is Validated'], 
+            ['Source Link'], 
+            ['About Company'], 
+            ['Location']
+        ];
+
+        function getValue(row, keys) {
+            for (let k of keys) {
+                // Check if key exists (case-insensitive search in row keys)
+                const foundKey = Object.keys(row).find(rk => rk.toLowerCase() === k.toLowerCase());
+                if (foundKey) return row[foundKey];
+            }
+            return '';
+        }
+
+
+        async function loadData() {
+            const tbody = document.getElementById('tableBody');
+            const countEl = document.getElementById('recordCount');
+            const updateEl = document.getElementById('lastUpdated');
+
+            tbody.innerHTML = `<tr><td colspan="22" class="p-8 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-2"><div class="sync-loader w-8 h-8 border-2 border-blue-600 border-t-transparent"></div><p class="text-xs">Loading data...</p></div></td></tr>`;
+
+            // Helper for fetch with timeout
+            const fetchWithTimeout = (url, options, timeout = 10000) => {
+                return Promise.race([
+                    fetch(url, options),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeout))
+                ]);
+            };
+
+            let response;
+            let json;
+
+            try {
+                // Try GET first
+                try {
+                    console.log("Attempting GET request...");
+                    response = await fetchWithTimeout(APPS_SCRIPT_URL, { method: 'GET' });
+                    const text = await response.text();
+                    try {
+                        json = JSON.parse(text);
+                    } catch (e) {
+                        // If JSON parse fails, it might be an HTML error page or redirect
+                        console.warn("GET response was not JSON:", text.substring(0, 100));
+                        throw new Error("Invalid server response (not JSON)");
+                    }
+                } catch (firstErr) {
+                    console.warn("GET failed, attempting POST read fallback...", firstErr);
+                    // Fallback to POST 'read'
+                     response = await fetchWithTimeout(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'read' }),
+                        headers: { "Content-Type": "text/plain;charset=utf-8" } // avoid preflight if possible, text/plain is standard for Apps Script simple requests
+                    });
+                    const text = await response.text();
+                    try {
+                        json = JSON.parse(text);
+                    } catch (e) {
+                         console.error("POST response parse error:", text.substring(0, 500));
+                         throw new Error(`Server returned invalid format: ${text.substring(0, 50).replace(/</g, '&lt;')}`);
+                    }
+                }
+
+                if (!json || (!json.success && !Array.isArray(json.data) && !json.data)) {
+                     throw new Error(json ? (json.message || 'Unknown error') : 'Empty response');
+                }
+
+                let data = Array.isArray(json.data) ? json.data : (json.data && Array.isArray(json.data) ? json.data : []);
+                
+                // Sort data by Timestamp (assuming idx 0 is Timestamp) - newest first
+                data.sort((a, b) => {
+                    const tA = getValue(a, COL_KEYS[0]);
+                    const tB = getValue(b, COL_KEYS[0]);
+                    return new Date(tB) - new Date(tA);
+                });
+                
+                tbody.innerHTML = '';
+                
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="22" class="p-8 text-center text-gray-500">No records found.</td></tr>`;
+                    countEl.innerText = '0 Records found';
+                    return;
+                }
+
+                // Render Data
+                data.forEach(row => {
+                    if (!row || typeof row !== 'object') return;
+                    const tr = document.createElement('tr');
+                    
+                    // Generate cells based on defined column order
+                    COL_KEYS.forEach((keys, idx) => {
+                        const td = document.createElement('td');
+                        let val = getValue(row, keys);
+                        // Ensure val is not undefined/null
+                        if (val === undefined || val === null) val = '';
+                        
+                        // --- 1. TIMESTAMP ---
+                        if (idx === 0 && val) { 
+                            try {
+                                val = new Date(val).toLocaleString();
+                            } catch(e) { val = String(val); }
+                            td.textContent = val;
+                            td.className = 'whitespace-nowrap';
+                            tr.appendChild(td);
+                            return;
+                        } 
+
+                        // --- 2. IMAGES (Col 1 & 2) ---
+                        else if ((idx === 1 || idx === 2) && val) { 
+                            if (String(val).startsWith('http')) {
+                                let imgId = null;
+                                const patterns = [/\/file\/d\/([^/]+)/, /\/d\/([^/]+)/, /id=([^&]+)/];
+                                for (let p of patterns) {
+                                    const m = val.match(p);
+                                    if (m && m[1]) { imgId = m[1]; break; }
+                                }
+                                
+                                const thumbUrl = imgId ? `https://drive.google.com/thumbnail?id=${imgId}&sz=w100` : val;
+                                const largeUrl = imgId ? `https://drive.google.com/thumbnail?id=${imgId}&sz=w600` : val;
+
+                                td.innerHTML = `
+                                    <div class="relative inline-block">
+                                        <img src="${thumbUrl}" 
+                                             class="w-8 h-8 rounded border border-gray-200 object-cover cursor-help hover:border-blue-500 transition-colors" 
+                                             onmouseenter="showPreview(event, '${largeUrl}')"
+                                             onmousemove="movePreview(event)"
+                                             onmouseleave="hidePreview()"
+                                             onclick="window.open('${val}', '_blank')"
+                                             onerror="this.src='https://placehold.co/40x40?text=?'">
+                                    </div>
+                                `;
+                                tr.appendChild(td);
+                                return;
+                            }
+                        } 
+
+                        // --- 3. WEBSITE ---
+                        else if (idx === 9 && val && String(val).startsWith('http')) { 
+                            td.innerHTML = `<a href="${val}" target="_blank" class="web-link">Web Site Link &nearr;</a>`;
+                            tr.appendChild(td);
+                            return;
+                        } 
+
+                        // --- 4. SOCIAL MEDIA (Col 10) ---
+                        else if (idx === 10 && val) {
+                            const links = String(val).split(/[\n,]+/).map(s => s.trim()).filter(s => s.startsWith('http'));
+                            
+                            if (links.length > 0) {
+                                let html = `<div class="flex flex-wrap gap-2 max-w-[300px]">`;
+                                links.forEach(link => {
+                                    let label = 'Link';
+                                    let colorClass = 'text-blue-600 bg-blue-50 hover:bg-blue-100';
+
+                                    if (link.includes('facebook')) { label = 'Facebook'; colorClass = 'text-blue-700 bg-blue-50 hover:bg-blue-100'; }
+                                    else if (link.includes('instagram')) { label = 'Instagram'; colorClass = 'text-pink-600 bg-pink-50 hover:bg-pink-100'; }
+                                    else if (link.includes('linkedin')) { label = 'LinkedIn'; colorClass = 'text-sky-700 bg-sky-50 hover:bg-sky-100'; }
+                                    else if (link.includes('twitter') || link.includes('x.com')) { label = 'X'; colorClass = 'text-neutral-900 bg-neutral-100 hover:bg-neutral-200'; }
+                                    else if (link.includes('youtube')) { label = 'YouTube'; colorClass = 'text-red-600 bg-red-50 hover:bg-red-100'; }
+
+                                    html += `<a href="${link}" target="_blank" class="inline-flex items-center px-2 py-1 rounded text-[10px] font-semibold border border-transparent ${colorClass} transition-colors" title="${link}">${label}</a>`;
+                                });
+                                html += `</div>`;
+                                td.innerHTML = html;
+                                td.className = ''; 
+                            } else {
+                                td.textContent = String(val);
+                                td.className = 'long-text-cell';
+                            }
+                            tr.appendChild(td);
+                            return;
+                        }
+
+                        // --- 5. SOURCE LINK ---
+                        else if (idx === 19 && val) { 
+                           let linkUrl = String(val);
+                           let linkLabel = linkUrl;
+
+                           // Try to detect formulas or plain URLs
+                           if (linkUrl.startsWith('=HYPERLINK')) {
+                                const match = linkUrl.match(/"([^"]+)"/);
+                                if (match && match[1]) linkUrl = match[1];
+                           }
+                           
+                           // If looks like a domain but missing protocol
+                           if (linkUrl.includes('.') && !linkUrl.includes('://') && !linkUrl.includes(' ')) {
+                               linkUrl = 'https://' + linkUrl;
+                           }
+
+                           if (linkUrl.startsWith('http')) {
+                               td.innerHTML = `<a href="${linkUrl}" target="_blank" class="web-link">Source Link &nearr;</a>`;
+                           } else {
+                               td.textContent = val;
+                               td.className = 'long-text-cell';
+                           }
+                           tr.appendChild(td);
+                           return;
+                        } 
+
+                        // --- 6. VALIDATED STATUS ---
+                        else if (idx === 18) { 
+                            const isValid = val === true || val === 'TRUE';
+                            td.innerHTML = isValid 
+                                ? '<span class="inline-flex h-2 w-2 rounded-full bg-green-500" title="Validated"></span>' 
+                                : '<span class="inline-flex h-2 w-2 rounded-full bg-gray-300" title="Not Validated"></span>';
+                            td.className = 'text-center';
+                            tr.appendChild(td);
+                            return;
+                        }
+
+                        // --- DEFAULT ---
+                        td.className = 'long-text-cell';
+                        td.title = val;
+                        td.textContent = val;
+                        tr.appendChild(td);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+                countEl.innerText = `${data.length} Records found`;
+                updateEl.innerText = new Date().toLocaleTimeString();
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="22" class="p-8 text-center text-red-500">
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="font-bold">Error loading data</span>
+                        <span class="text-xs bg-red-50 p-2 rounded">${err.message}</span>
+                        <button onclick="loadData()" class="px-3 py-1 bg-white border border-red-200 rounded-lg text-xs mt-2 hover:bg-gray-50">Retry</button>
+                    </div>
+                </td></tr>`;
+            }
+        }
+
+        // Load on start
+        loadData();
+    </script>
+</body>
+</html>
